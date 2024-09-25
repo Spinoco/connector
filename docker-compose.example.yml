@@ -1,6 +1,6 @@
 services:
     connector:
-      image: 
+      image: spinoco/connector:latest
       user: root
       environment:
         - SP_API_TOKEN=
