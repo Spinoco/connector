@@ -34,10 +34,10 @@ export function postWithBody<I, O>(server: HttpServer, requestPath: string, toke
   * @returns a promise that resolves when the file is saved
   */
 export function saveToFile(server: HttpServer, requestPath: string, token: string, fileName: string): Promise<void> {
-	return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const options = buildOptions(server, 'GET', requestPath, token);
     const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options): doRequest(options);
-    
+
     incomingMessage.then(res => {
       if (res.statusCode === 200) {
         const file = fs.createWriteStream(fileName)
@@ -57,7 +57,7 @@ export function saveToFile(server: HttpServer, requestPath: string, token: strin
         reject(handleUnexpectedResponse(res.statusCode, 'GET', requestPath));
       }
 
-		})	
+    })	
   })
 }
 
@@ -80,7 +80,7 @@ export function del(server: HttpServer, requestPath: string, token: string): Pro
       } else {
         reject(handleUnexpectedResponse(res.statusCode, 'DELETE', requestPath));
       }
-		})
+    })
 
 	})
 

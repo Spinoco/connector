@@ -71,7 +71,6 @@ function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
       reject(undefinedEnvVar("SP_TASK_SYNC_FILE_NAME_TEMPLATE"));
     }
 
-    //todo: try !
     if (typeof(process.env.SP_TASK_SYNC_SAVE_TO) !== "string") {
       reject(undefinedEnvVar("SP_TASK_SYNC_SAVE_TO"));
     }
