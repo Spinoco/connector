@@ -68,10 +68,11 @@ function doPaging(config: Config, nextQuery: PagedQuery<TaskSyncQuery, string>, 
   return postWithBody<PagedQuery<TaskSyncQuery, string>, PagingResult<TaskSyncData>>(config.api.server, "/task/sync/", config.api.token, nextQuery).then(
     processResult(config)
   ).catch((error) => {
-    if (retry < retriesBeforeFailure) {
+    if (retry < retriesBeforeFailure && !error.fatal) {
+      console.error(`Failed to process tasks. Will retry in ${retryTimeout/1000} seconds. Error:`, error);
       delayedQuery(config, retryTimeout, nextQuery, retry + 1);
     } else {
-      console.error("Error processing task data", error);
+      console.error("Failed to process tasks. No more retries. Error:", error);
     }
   });
 }

@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as https from 'node:https';
 import * as http from 'node:http';
 import { HttpServer } from './interfaces/http-server';
+import { HttpError } from './interfaces/http-error';
 
 /**
   * Perform a POST request to the server and return the result in a promise
@@ -19,7 +20,7 @@ export function postWithBody<I, O>(server: HttpServer, requestPath: string, toke
     const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options, postData): doRequest(options, postData);
 
     incomingMessage.then(res => {
-      return handleJsonResult(res, resolve, reject); 
+      return handleJsonResult(requestPath, res, resolve, reject); 
     })
   })
 }
@@ -38,25 +39,30 @@ export function saveToFile(server: HttpServer, requestPath: string, token: strin
     const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options): doRequest(options);
     
     incomingMessage.then(res => {
+      if (res.statusCode === 200) {
+        const file = fs.createWriteStream(fileName)
 
-      const file = fs.createWriteStream(fileName)
+        res.pipe(file);
 
-      res.pipe(file);
-      file.on('finish', () => {
-        file.close(() => {
-          resolve();
+        file.on('finish', () => {
+          file.close(() => {
+            resolve();
+          });
         });
-      });
 
-      file.on('error', (error) => {
-        reject(error);
-      });
+        file.on('error', (error) => {
+          reject(buildLocalError(`Failed to save file ${fileName}. Error: ${error.message}`)); 
+        });
+      } else {
+        reject(handleUnexpectedResponse(res.statusCode, 'GET', requestPath));
+      }
 
 		})	
   })
 }
 
 /**
+  *
   * Perform a DELETE request to the server
   * @param server - server configuration
   * @param requestPath - path of the request
@@ -72,7 +78,7 @@ export function del(server: HttpServer, requestPath: string, token: string): Pro
       if (res.statusCode === 204) {
         resolve();
       } else {
-        reject("Expected 204 status code, got " + res.statusCode);
+        reject(handleUnexpectedResponse(res.statusCode, 'DELETE', requestPath));
       }
 		})
 
@@ -88,7 +94,9 @@ export function del(server: HttpServer, requestPath: string, token: string): Pro
   */
 function doSecureRequest(options: https.RequestOptions, postData?: string): Promise<http.IncomingMessage> {
   return new Promise((resolve, reject) => {
-    https.request(options, resolve).on('error', reject).end(postData);
+    https.request(options, resolve).on('error', (error) =>
+      reject(buildLocalError(`Failed to perform request to ${options.path}. Error: ${error.message}`))
+    ).end(postData);
   })
 }
 
@@ -100,7 +108,9 @@ function doSecureRequest(options: https.RequestOptions, postData?: string): Prom
   */
 function doRequest(options: https.RequestOptions, postData?: string): Promise<http.IncomingMessage> {
   return new Promise((resolve, reject) => {
-    http.request(options, resolve).on('error', reject).end(postData);
+    http.request(options, resolve).on('error', (error) =>
+      reject(buildLocalError(`Failed to perform request to ${options.path}. Error: ${error.message}`))
+    ).end(postData);
   })
 }
 
@@ -110,21 +120,20 @@ function doRequest(options: https.RequestOptions, postData?: string): Promise<ht
   * @param resolve - resolve function
   * @param reject - reject function
   */
-function handleJsonResult<O>(res: http.IncomingMessage, resolve: (value: O) => void, reject: (reason?: any) => void): void {
+function handleJsonResult<O>(requestPath: string, res: http.IncomingMessage, resolve: (value: O) => void, reject: (reason?: any) => void): void {
   res.setEncoding('utf8');
   let rawData = '';
   res.on('data', (chunk) => { rawData += chunk; });
   res.on('end', () => {
-    if (res.statusCode !== 200) {
-      //reject('Failed to get data from server: ' + rawData);
-      reject(res.statusCode);
-    } else {
+    if (res.statusCode === 200) {
       try {
         const parsedData: O = JSON.parse(rawData);
         resolve(parsedData);
       } catch (e) {
-        reject(new Error(`error In parsing of json response: ${e.message}`));
+        reject(buildLocalError(`Failed to parse JSON data. Error ${e.message}`));
       }
+    } else {
+      reject(handleUnexpectedResponse(res.statusCode, 'POST', requestPath));
     }
   });
 }
@@ -154,13 +163,63 @@ function buildOptions(server: HttpServer, method: string, requestPath: string, t
   if (postData) {
     return {
       ...options
-        , headers: {
-      ...options.headers,
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(postData)
-        },
+      , headers: {
+        ...options.headers,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      },
     }
   } else {
     return options;
+  }
+}
+
+
+/**
+  * handle unexpected response from the server
+  * @param statusCode - status code of the response
+  * @param method - HTTP method
+  * @param requestPath - path of the request
+  * @returns an error object
+  */
+function handleUnexpectedResponse(statusCode: number, method: string, requestPath: string): HttpError {
+  switch(statusCode) {
+    case 401: {
+      return {
+        status: statusCode,
+        message: `Failed to authenticate the request. Check the token and try again.`,
+        fatal: true
+      }
+    }
+
+    case 404: {
+      return {
+        status: statusCode,
+        message: `${requestPath} not found.`,
+        fatal: false
+      }
+    }
+
+    default: {
+      return {
+        status: statusCode,
+        message: `Failed to ${method} ${requestPath}.`,
+        fatal: false
+      }
+    }
+
+  }
+}
+
+/**
+  * Build an error caused by the application, not the server
+  * @param message - error message
+  * @returns an error object
+  */
+function buildLocalError(message: string): HttpError {
+  return {
+    status: 0,
+    message: message,
+    fatal: false
   }
 }
