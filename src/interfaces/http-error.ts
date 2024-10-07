@@ -1,8 +1,8 @@
 /**
- * Helper to get type aware http errors
+ * Helper to get type-aware HTTP errors
  */
 export interface HttpError {
-  /** http status number (i.e. 404 for Not found) **/
+  /** http status number (e.g., 404 for Not found) **/
   status: number;
   /** received message **/
   message: string;
