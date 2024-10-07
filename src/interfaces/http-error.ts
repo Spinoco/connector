@@ -1,6 +1,12 @@
+/**
+ * Helper to get type aware http errors
+ */
 export interface HttpError {
+  /** http status number (i.e. 404 for Not found) **/
   status: number;
+  /** received message **/
   message: string;
-  fatal: boolean; //if true, the error is fatal and the application should stop
-};
+  /** if true, the error is fatal and the application should stop **/
+  fatal: boolean;
+}
 
