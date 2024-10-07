@@ -2,17 +2,17 @@
  * Abstraction over paged queries
  */
 export interface PagedQuery<Q, P> {
-  /** Query to perform against the server **/
+  /** query to perform against the server **/
   query?: Q;
-  /** page data to send that allows to get next page. This shall be context of PagingResult.next**/
+  /** Page data to send that allows to get next page. This shall be the context of PagingResult.next **/
   page?: P;
-  /** number of record to return **/
+  /** number of records to return **/
   count: number;
 }
 
 export interface PagingResult<A> {
   /** received element from the query **/
   result: A[];
-  /** if present contains paging data that have to be supplied to the server with next PagedQuery **/
+  /** if present, contains the paging data that have to be supplied to the server with the next PagedQuery **/
   next?: string;
 }
