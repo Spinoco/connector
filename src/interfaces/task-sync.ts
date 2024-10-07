@@ -1,15 +1,15 @@
 /**
  * Data used for task synchronization
- * This contains data received from the server instructing the
- * Connector with correct filename and actions to perform.
+ * This contains data received from the server, instructing
+ * the Connector with the correct filename and actions to perform.
  */
 export interface TaskSyncData {
-  /** id of the task (type 1 uuid) **/
+  /** id of the task (type 1 UUID) **/
   taskId: string;
-  /** actions that shall be performed with task (i.e. download recording, transcriptions, ...) **/
+  /** actions that shall be performed with task (e.g., download recording, transcriptions, ...) **/
   get: ClientGetRequest[];
 
-  /** actions to perform once data are committed to the storage. This is invoked AFTER `get` is committed **/
+  /** actions to perform once the data is committed to the storage. This is invoked AFTER `get` is committed **/
   delete: ClientDeleteRequest[];
 }
 
@@ -30,7 +30,7 @@ export interface ClientDeleteRequest {
 }
 
 /**
- * Encapsulates query to use while pulling the tasks
+ * Encapsulates the query to use while pulling the tasks
  */
 export interface TaskSyncQuery {
   /** tag that is used to keep the state on the server **/
