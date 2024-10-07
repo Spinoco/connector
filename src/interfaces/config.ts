@@ -1,10 +1,10 @@
 import { HttpServer } from './http-server';
 
 /**
- * Configuration of the Spinoco API Server from where the data will be pulled.
+ * Configuration of the Spinoco API Server from which the data will be pulled.
  */
 export interface ApiConfig {
-  /** configuration for the Spinoco api server to use**/
+  /** Configuration to be used by the Spinoco API server **/
   server: HttpServer;
 
   /** Spinoco Authentication token **/
@@ -15,7 +15,7 @@ export interface ApiConfig {
  * Configuration of the task synchronization
  */
 export interface TaskSyncConfig {
-  /** tag to use for storing synchronization data **/
+  /** tag to use for storing the synchronization data **/
   tag: string;
 
   /** template of the filename that will be used to store the server data **/
@@ -24,10 +24,10 @@ export interface TaskSyncConfig {
   /** type of data to get (recordings, transcriptions) **/
   get?: string;
 
-  /** type of data to delete from the Spinoco once they are committed to local storage (recordings) **/
+  /** type of data to delete from Spinoco once they are committed to local storage (recordings) **/
   delete?: string;
 
-  /** Constant path prefix that will be added before the file path. Think of this as root of the file storage **/
+  /** Constant path prefix that will be added before the file path. Think of this as the root of the file storage **/
   saveTo: string;
 }
 
