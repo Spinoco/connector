@@ -16,12 +16,12 @@ The tool is configured using environment variables.
 |--------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | SP_API_TOKEN                   |                        | API token obtained from Spinoco Account. Please see instructions on how to obtain one [here](https://help.spinoco.com/administrators/generate-an-api-token-for-a-user). |
 | SP_TASK_SYNC_TAG               | my_sync_tag                | Tag that is used to keep the synchronization state on the Spinoco Platform. Must be unique for a given user, and must be maximum 64 characters (UTF8).                  |
-| SP_TASK_SYNC_FILE_NAME_TEMPLATE | see below  | Contains template for the file that is generated from the metadata of the task.                                                                           |
-| SP_TASK_SYNC_GET_DATA          | recordings, transcriptions |Which data to get (Recordings or Transcriptions supported now, comma separated list)          |
-| SP_TASK_SYNC_DELETE_DATA       | recordings                 |  Which data to remove from the Spinoco Platform after successful synchronization (Recordings)|
-| SP_TASK_SYNC_SAVE_TO           | /data                      | Root of the synchronization |
-| SP_TASK_SYNC_STORAGE_PROVIDER   | local                      | Storage provider to use. Currently supported are: local, s3, gcs, azure. |
-| SP_LOG_LEVEL | info | Log level of the tool. Possible values are: error, warn, info, debug, trace. |
+| SP_TASK_SYNC_FILE_NAME_TEMPLATE | see below  | Contains template for the file that is generated from the metadata of the task.                                                                                         |
+| SP_TASK_SYNC_GET_DATA          | recordings, transcriptions | Which data to get. See below for supported options.                                                                                                                     |
+| SP_TASK_SYNC_DELETE_DATA       | recordings                 | Which data to remove from the Spinoco Platform after successful synchronization (Recordings only supported now)                                                         |
+| SP_TASK_SYNC_SAVE_TO           | /data                      | Root of the synchronization                                                                                                                                             |
+| SP_TASK_SYNC_STORAGE_PROVIDER   | local                      | Storage provider to use. Currently supported are: local, s3, gcs, azure.                                                                                                |
+| SP_LOG_LEVEL | info | Log level of the tool. Possible values are: error, warn, info, debug, trace.                                                                                            |
 
 
 ### File Storage Configuration
@@ -90,6 +90,20 @@ Following additional parameters must be set (all are required):
 | SP_TASK_SYNC_AZURE_DSN         | my_bucket     | Azure DSN Connection string, containing the credentials to the BLOB storage |
 | SP_TASK_SYNC_AZURE_CLIENT_NAME | my_client     | Name of teh Azure Blob Storage client                                       |
 
+### Supported data types
+
+Tool allows to configure which data to support while synchronizing. Following data types are supported:
+
+- CallMetadata - Metadata of the calls. Data are downloaded as file with `meta.json` suffix. 
+- Recordings - Call recordings. There may be 0 or more recordings per task. Data are downloaded as file with `.ogg` suffix.
+- Transcriptions - Transcriptions of the calls. Each recording may or may not have a transcription. Data are downloaded as file with `trans.json` suffix.
+- ChatMetadata - Metadata of the chat messages. Data are downloaded as file with `meta.json` suffix.
+- ChatHistory - Chat history. Individual chat messages received or sent in each chat conversation.  Data are downloaded as file with `history.json` suffix.
+- SMSMetadata - Metadata of the SMS messages. Data are downloaded as file with `meta.json` suffix.
+- EmailMetadata - Metadata of the emails. Data are downloaded as file with `meta.json` suffix.
+- CommonMetadata - Metadata of the tasks. Data are downloaded as file with `meta.json` suffix.
+- WorkflowMetadata - Metadata of the workflows. Data are downloaded as file with `meta.json` suffix.
+
 
 ### File Name Template 
 
@@ -157,8 +171,7 @@ npm install
 npm run dist
 ```
 
-To run the tool from the command line, you can use the following command 
-
+To run the tool from the command line, you can use the following command
 
 ```shell
 node dist/bundle.js
