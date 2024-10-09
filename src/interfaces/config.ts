@@ -45,6 +45,6 @@ export interface Config {
 /** fails if environment is not defined or provides value of the environment **/
 export function assertEnv(env: string): Promise<string> {
   const value = process.env[env]
-  if (value == undefined) return(Promise.reject(`Configuration option for ${env} is not defined`))
-  else return(Promise.resolve(value))
+  if (value == undefined) return Promise.reject(`Configuration option for ${env} is not defined`);
+  else return Promise.resolve(value);
 }

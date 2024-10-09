@@ -1,6 +1,5 @@
 import pino, {BaseLogger} from "pino";
 
-
 export interface SpinocoLogger {
 
   trace(message: string, object?: any): void
@@ -17,7 +16,7 @@ export interface SpinocoLogger {
 
 function buildRootLogger(): SpinocoLogger {
   const pinoLogger: BaseLogger = pino({
-    level :  (process.env.SP_LOG_LEVEL || "info").toLowerCase(),
+    level: (process.env.SP_LOG_LEVEL || "info").toLowerCase(),
     redact: [
       "api.token" // prevent token to show in the logs
     ]
