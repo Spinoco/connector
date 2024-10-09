@@ -1,8 +1,9 @@
-import * as fs from 'node:fs';
 import * as https from 'node:https';
 import * as http from 'node:http';
 import { HttpServer } from './interfaces/http-server';
 import { HttpError } from './interfaces/http-error';
+import {FileStorage} from "@flystorage/file-storage";
+import {Logger} from "./logging";
 
 /**
   * Perform a POST request to the server and return the result in a promise
@@ -31,34 +32,28 @@ export function postWithBody<I, O>(server: HttpServer, requestPath: string, toke
   * @param requestPath - path of the request
   * @param token - token for authorization
   * @param fileName - name of the file to save the result to
+  * @param storage - storage provider to use to save the file
   * @returns a promise that resolves when the file is saved
   */
-export function saveToFile(server: HttpServer, requestPath: string, token: string, fileName: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const options = buildOptions(server, 'GET', requestPath, token);
-    const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options): doRequest(options);
+export function saveToFile(server: HttpServer, requestPath: string, token: string, fileName: string, storage: FileStorage): Promise<void> {
 
-    incomingMessage.then(res => {
-      if (res.statusCode === 200) {
-        const file = fs.createWriteStream(fileName)
+  Logger.info(`Requesting to download ${fileName}`)
+  const options = buildOptions(server, 'GET', requestPath, token);
+  const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options): doRequest(options);
 
-        res.pipe(file);
+  return incomingMessage.then(response => {
+    if (response.statusCode === 200) {
+      Logger.debug(`Starting to download ${fileName}`)
+      return storage.write(fileName, response).then(() => {
+        Logger.info(`Successfully stored ${fileName}`);
+        return Promise.resolve()
+      })
+    } else {
+      return Promise.reject(handleUnexpectedResponse(response.statusCode, 'GET', requestPath));
+    }
 
-        file.on('finish', () => {
-          file.close(() => {
-            resolve();
-          });
-        });
-
-        file.on('error', (error) => {
-          reject(buildLocalError(`Failed to save file ${fileName}. Error: ${error.message}`)); 
-        });
-      } else {
-        reject(handleUnexpectedResponse(res.statusCode, 'GET', requestPath));
-      }
-
-    })	
   })
+
 }
 
 /**
@@ -72,10 +67,13 @@ export function saveToFile(server: HttpServer, requestPath: string, token: strin
 export function del(server: HttpServer, requestPath: string, token: string): Promise<void> {
 	return new Promise((resolve, reject) => {
     const options = buildOptions(server, 'DELETE', requestPath, token);
+
+    Logger.info(`Removing file at ${requestPath}`)
     const incomingMessage: Promise<http.IncomingMessage> = server.secure ? doSecureRequest(options): doRequest(options);
 
     incomingMessage.then(res => {
       if (res.statusCode === 204) {
+        Logger.debug(`Successfully removed : ${requestPath}`)
         resolve();
       } else {
         reject(handleUnexpectedResponse(res.statusCode, 'DELETE', requestPath));
@@ -116,6 +114,7 @@ function doRequest(options: https.RequestOptions, postData?: string): Promise<ht
 
 /**
   * Handle the result of a http/https request and call the resolve with the parsed JSON data or reject with an error
+  * @param requestPath  - path of the request - to be used for logging purposes
   * @param res - incoming message
   * @param resolve - resolve function
   * @param reject - reject function
