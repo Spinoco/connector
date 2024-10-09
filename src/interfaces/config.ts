@@ -22,6 +22,9 @@ export interface TaskSyncConfig {
   /** template of the filename that will be used to store the server data **/
   fileNameTemplate: string;
 
+  /** if defined and this is first run of the tool, then this allows to set initial date from which the tool will start pulling the data **/
+  startFrom?: Date
+
   /** type of data to get (recordings, transcriptions) **/
   get?: string;
 
