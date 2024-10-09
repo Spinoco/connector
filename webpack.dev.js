@@ -1,6 +1,6 @@
 const path = require('path');
 module.exports = {
-  entry: './src/index.ts',
+  entry: './output/index.js',
   mode: 'development',
   devtool: 'inline-source-map',
   watch: true,
@@ -10,15 +10,6 @@ module.exports = {
     path: path.resolve(__dirname, 'dev'),
   },
   resolve: {
-    extensions: ['.ts', '.js'],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
-      },
-    ],
-  },
+    extensions: ['.js']
+  }
 };

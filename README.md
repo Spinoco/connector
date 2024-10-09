@@ -14,12 +14,82 @@ The tool is configured using environment variables.
 
 | Variable                       | Example value              | Description                                                                                                                                                             |
 |--------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SP_API_TOKEN                   | None                       | API token obtained from Spinoco Account. Please see instructions on how to obtain one [here](https://help.spinoco.com/administrators/generate-an-api-token-for-a-user). |
+| SP_API_TOKEN                   |                        | API token obtained from Spinoco Account. Please see instructions on how to obtain one [here](https://help.spinoco.com/administrators/generate-an-api-token-for-a-user). |
 | SP_TASK_SYNC_TAG               | my_sync_tag                | Tag that is used to keep the synchronization state on the Spinoco Platform. Must be unique for a given user, and must be maximum 64 characters (UTF8).                  |
 | SP_TASK_SYNC_FILE_NAME_TEMPLATE | see below  | Contains template for the file that is generated from the metadata of the task.                                                                           |
 | SP_TASK_SYNC_GET_DATA          | recordings, transcriptions |Which data to get (Recordings or Transcriptions supported now, comma separated list)          |
 | SP_TASK_SYNC_DELETE_DATA       | recordings                 |  Which data to remove from the Spinoco Platform after successful synchronization (Recordings)|
 | SP_TASK_SYNC_SAVE_TO           | /data                      | Root of the synchronization |
+| SP_TASK_SYNC_STORAGE_PROVIDER   | local                      | Storage provider to use. Currently supported are: local, s3, gcs, azure. |
+| SP_LOG_LEVEL | info | Log level of the tool. Possible values are: error, warn, info, debug, trace. |
+
+
+### File Storage Configuration
+
+Tool supports multiple storage providers. Currently following storage providers are supported:
+
+- Local File System
+- AWS S3
+- Google Cloud Storage
+- Azure Blob Storage
+
+See below for configuring the storage providers.
+
+#### Local File System
+
+This is default storage provider. Value of SP_TASK_SYNC_STORAGE_PROVIDER must be set to `local` or leaved as empty for this storage provider to work.
+There is no additional parameters / configuration options required to be specified.
+
+Files will be stored under directory specified in SP_TASK_SYNC_SAVE_TO environment variable.
+
+#### AWS S3
+
+This is storage provider that allows to store files in AWS S3 Bucket. To use this provider value of SP_TASK_SYNC_STORAGE_PROVIDER must be set to `s3`.
+
+Following additional parameters must be set (all required):
+
+| Variable                         | Example value | Description                                                                                                                 |
+|----------------------------------|-------------|-----------------------------------------------------------------------------------------------------------------------------|
+| SP_TASK_SYNC_S3_BUCKET           | my_bucket   | Name of the S3 bucket where the files will be stored.                                                    |
+| SP_TASK_SYNC_S3_REGION           | eu-central-1 | Region of the S3 bucket.                                                                                                    |
+
+Following methods can be used to provide credentials:
+- Environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+- Shared credentials file at `~/.aws/credentials`
+- Credentials provided by ECS orchestrator
+- Credentials loaded from AWS IAM using the credentials provider of the Amazon EC2 instance (if configured in the instance metadata)
+
+For more information see [AWS SDK for JavaScript](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html)
+
+#### Google Cloud Storage
+
+This is storage provider that allows to store files in Google Cloud Storage. To use this provider value of SP_TASK_SYNC_STORAGE_PROVIDER must be set to `gcs`.
+
+Following additional parameters must be set (all are required):
+
+| Variable                 | Example value | Description                                                              |
+|--------------------------|-------------|--------------------------------------------------------------------------|
+| SP_TASK_SYNC_GCS_BUCKET  | my_bucket   | Name of the GCS bucket where the files will be stored.  |
+| SP_TASK_SYNC_GCS_PROJECT | my_project  | User project identification where the bucket is created.                 |
+
+Following methods can be used to provide credentials:
+- Environment variable `GOOGLE_APPLICATION_CREDENTIALS` that stores path to the JSON file with the credentials of service account
+- Google's default application credentials
+- Credentials provided by GCP orchestrator.
+
+For more information see [Google Cloud Storage](https://cloud.google.com/docs/authentication/getting-started)
+
+#### Azure Blob Storage
+
+This is storage provider that allows to store files in Azure Blob Storage. To use this provider value of SP_TASK_SYNC_STORAGE_PROVIDER must be set to `azure`.
+
+Following additional parameters must be set (all are required):
+
+| Variable                       | Example value | Description                                                                 |
+|--------------------------------|---------------|-----------------------------------------------------------------------------|
+| SP_TASK_SYNC_AZURE_DSN         | my_bucket     | Azure DSN Connection string, containing the credentials to the BLOB storage |
+| SP_TASK_SYNC_AZURE_CLIENT_NAME | my_client     | Name of teh Azure Blob Storage client                                       |
+
 
 ### File Name Template 
 
@@ -39,7 +109,7 @@ To format the date (due_date), you can use date formatting options from the Java
 ### Example template 
 
 ```
-{{due_date|yyyy}}/{{due_date|MM}}/{{due_date|dd}}/{{due_date|yyyymmddhhmmss}}-{{task_id}}
+{{due_date|yyyy}}/{{due_date|MM}}/{{due_date|dd}}/{{due_date|yyyyMMddHHmmss}}-{{task_id}}
 ```
 
 This will result in the following file name 
@@ -62,6 +132,9 @@ If, for example, the template results in the file name above and both the record
 ## Usage
 
 As the tool is provided as a docker image, it can be easily used by any orchestrator, which supports docker images, such as Docker Compose or Kubernetes. 
+
+Docker image is available from the public docker hub repository - `spinoco/connector:latest`.
+ 
 
 ### Docker Compose 
 

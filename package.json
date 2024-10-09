@@ -1,18 +1,30 @@
 {
-  "name": "Spinoco connector",
+  "name": "spinoco-connector",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "dev": "npx webpack -c webpack.dev.js",
-    "run-dev": "node --env-file=env.dev dev/bundle.js",
-    "dist": "npx webpack -c webpack.dist.js",
-    "run-dist": "node --env-file=env.dev dist/bundle.js"
+    "dev": "npx tsc",
+    "run-dev": "npx tsc && node --env-file=env.dev output/index.js",
+    "dist": "npx tsc",
+    "run-dist": "node --env-file=env.defaults output/index.js"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",
-    "typescript": "^5.6.2",
     "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.2",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.666.0",
+    "@azure/storage-blob": "^12.25.0",
+    "@flystorage/aws-s3": "^0.1.5",
+    "@flystorage/azure-storage-blob": "^0.1.5",
+    "@flystorage/file-storage": "^0.1.5",
+    "@flystorage/google-cloud-storage": "^0.1.4",
+    "@flystorage/local-fs": "^0.1.7",
+    "@google-cloud/storage": "^7.13.0",
+    "pino": "^9.4.0"
   }
 }
