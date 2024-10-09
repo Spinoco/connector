@@ -1,5 +1,5 @@
 import { HttpServer } from "./interfaces/http-server";
-import { Config, ApiConfig, TaskSyncConfig } from "./interfaces/config";
+import {Config, ApiConfig, TaskSyncConfig, assertEnv} from "./interfaces/config";
 
 /**
   * Default API server configuration
@@ -62,27 +62,17 @@ function buildApiConfig(): Promise<ApiConfig> {
   * Build task sync configuration from environment variables
   */
 function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
-  return new Promise((resolve, reject) => {
-    if (typeof(process.env.SP_TASK_SYNC_TAG) !== "string") {
-      reject(undefinedEnvVar("SP_TASK_SYNC_TAG"));
-    }
-
-    if (typeof(process.env.SP_TASK_SYNC_FILE_NAME_TEMPLATE) !== "string") {
-      reject(undefinedEnvVar("SP_TASK_SYNC_FILE_NAME_TEMPLATE"));
-    }
-
-    if (typeof(process.env.SP_TASK_SYNC_SAVE_TO) !== "string") {
-      reject(undefinedEnvVar("SP_TASK_SYNC_SAVE_TO"));
-    }
-
-    resolve({
-      tag: process.env.SP_TASK_SYNC_TAG,
-      fileNameTemplate: process.env.SP_TASK_SYNC_FILE_NAME_TEMPLATE,
-      get: process.env.SP_TASK_SYNC_GET_DATA || "",
-      delete: process.env.SP_TASK_SYNC_DELETE_DATA || "",
-      saveTo: process.env.SP_TASK_SYNC_SAVE_TO
+  return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => {
+    return assertEnv("SP_TASK_SYNC_TAG").then((syncTag) => {
+      return Promise.resolve({
+        tag: syncTag,
+        fileNameTemplate: fileNameTemplate,
+        startFrom: process.env.SP_TASK_START_FROM,
+        get: process.env.SP_TASK_SYNC_GET_DATA || "",
+        delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
+      });
     });
-  })
+  });
   
 }
 

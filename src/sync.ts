@@ -3,7 +3,6 @@ import { postWithBody, saveToFile, del } from "./http";
 import { Config } from "./interfaces/config";
 import { TaskSyncQuery, TaskSyncData } from "./interfaces/task-sync";
 import { PagedQuery, PagingResult } from "./interfaces/paging-query";
-import { mkdirForFile } from "./folder";
 
 const pageSize = 10;
 const retryTimeout = 30 * 1000; //30 seconds
@@ -19,10 +18,7 @@ const retriesBeforeFailure = 3;
   */
 const processTaskData = (config: Config) => (taskData: TaskSyncData): Promise<void> => {
   return foldPromise(taskData.get, (getRequest) => {
-    const saveTo = `${config.taskSync.saveTo}/${getRequest.fileName}`;           
-    return mkdirForFile(saveTo).then(() =>
-      saveToFile(config.api.server, getRequest.path, config.api.token, saveTo)
-    )
+    return saveToFile(config.api.server, getRequest.path, config.api.token, getRequest.fileName, config.storage)
   }).then(() => foldPromise(taskData.delete, (deleteRequest) =>
     del(config.api.server, deleteRequest.path, config.api.token)
    )
@@ -87,7 +83,8 @@ function mkFirstQuery(config: Config): PagedQuery<TaskSyncQuery, string> {
       tag: config.taskSync.tag,
       get: config.taskSync.get,
       delete: config.taskSync.delete,
-      fileNameTemplate: config.taskSync.fileNameTemplate
+      fileNameTemplate: config.taskSync.fileNameTemplate,
+      startFrom: config.taskSync.startFrom.getTime().toString() // we need to send DT as millis since epoch here encoded as string.
     },
     count: pageSize
   }

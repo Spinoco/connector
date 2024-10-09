@@ -41,5 +41,7 @@ export interface TaskSyncQuery {
   delete?: string;
   /** template to build the file name **/
   fileNameTemplate: string;
+  /** initial time from which to pull data, only when performing first query with tag, otherwise ignored **/
+  startFrom?: string
 }
 
