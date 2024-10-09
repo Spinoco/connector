@@ -1,4 +1,5 @@
 import { HttpServer } from './http-server';
+import {FileStorage} from '@flystorage/file-storage';
 
 /**
  * Configuration of the Spinoco API Server from which the data will be pulled.
@@ -26,9 +27,6 @@ export interface TaskSyncConfig {
 
   /** type of data to delete from Spinoco once they are committed to local storage (recordings) **/
   delete?: string;
-
-  /** Constant path prefix that will be added before the file path. Think of this as the root of the file storage **/
-  saveTo: string;
 }
 
 /** Interface for the configuration object **/
@@ -38,4 +36,15 @@ export interface Config {
 
   /** configuration of the task synchronization **/
   taskSync: TaskSyncConfig;
+
+  /** contains reference to active file storage used as target of this synchronization **/
+  storage: FileStorage;
+
+}
+
+/** fails if environment is not defined or provides value of the environment **/
+export function assertEnv(env: string): Promise<string> {
+  const value = process.env[env]
+  if (value == undefined) return Promise.reject(`Configuration option for ${env} is not defined`);
+  else return Promise.resolve(value);
 }
