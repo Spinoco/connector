@@ -1,5 +1,9 @@
 import { HttpServer } from "./interfaces/http-server";
 import {Config, ApiConfig, TaskSyncConfig, assertEnv} from "./interfaces/config";
+import {buildLocalStorage} from "./interfaces/storage/local-storage";
+import {buildAWSS3Storage} from "./interfaces/storage/aws-s3-storage";
+import {buildGCSStorage} from "./interfaces/storage/gcs-storage";
+import {buildAzureStorage} from "./interfaces/storage/azure-storage";
 
 /**
   * Default API server configuration
@@ -15,10 +19,13 @@ const defaultAPIServer: HttpServer = {
 export function buildConfig(): Promise<Config> {
   return buildTaskSyncConfig().then((taskSyncConfig) => {
     return buildApiConfig().then((apiConfig) => {
-      return {
-        api: apiConfig,
-        taskSync: taskSyncConfig
-      };
+      return buildStorage().then((storage) => {
+        return Promise.resolve({
+          api: apiConfig,
+          taskSync: taskSyncConfig,
+          storage: storage
+        });
+      })
     });
   });
 }
@@ -64,10 +71,15 @@ function buildApiConfig(): Promise<ApiConfig> {
 function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
   return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => {
     return assertEnv("SP_TASK_SYNC_TAG").then((syncTag) => {
+      let startFrom: Date = undefined;
+      if (process.env.SP_TASK_START_FROM != undefined)  {
+        startFrom = new Date(process.env.SP_TASK_START_FROM)
+      }
+
       return Promise.resolve({
         tag: syncTag,
         fileNameTemplate: fileNameTemplate,
-        startFrom: process.env.SP_TASK_START_FROM,
+        startFrom: startFrom,
         get: process.env.SP_TASK_SYNC_GET_DATA || "",
         delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
       });
@@ -75,4 +87,17 @@ function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
   });
   
 }
+
+
+function buildStorage() {
+  const providerType = (process.env.SP_TASK_SYNC_STORAGE_PROVIDER || "local").toLowerCase();
+  switch (providerType) {
+    case "local": return buildLocalStorage();
+    case "s3": return buildAWSS3Storage();
+    case "gcs": return buildGCSStorage();
+    case "azure": return buildAzureStorage();
+    default: return Promise.reject("Unsupported storage provider: " + providerType);
+  }
+}
+
 

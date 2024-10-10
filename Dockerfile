@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64,linux/arm node:20.18
+FROM node:20.18
 
 COPY --chown=node:node src/ /home/node/app/src
 COPY --chown=node:node package.json /home/node/app/

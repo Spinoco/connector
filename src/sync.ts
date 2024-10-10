@@ -3,6 +3,7 @@ import { postWithBody, saveToFile, del } from "./http";
 import { Config } from "./interfaces/config";
 import { TaskSyncQuery, TaskSyncData } from "./interfaces/task-sync";
 import { PagedQuery, PagingResult } from "./interfaces/paging-query";
+import {Logger} from "./logging";
 
 const pageSize = 10;
 const retryTimeout = 30 * 1000; //30 seconds
@@ -17,6 +18,7 @@ const retriesBeforeFailure = 3;
   * @param taskData - data received from the server
   */
 const processTaskData = (config: Config) => (taskData: TaskSyncData): Promise<void> => {
+  Logger.info(`Received page size: ${taskData.get.length}`)
   return foldPromise(taskData.get, (getRequest) => {
     return saveToFile(config.api.server, getRequest.path, config.api.token, getRequest.fileName, config.storage)
   }).then(() => foldPromise(taskData.delete, (deleteRequest) =>
@@ -36,8 +38,10 @@ const processTaskData = (config: Config) => (taskData: TaskSyncData): Promise<vo
 const processResult = (config: Config) => (result: PagingResult<TaskSyncData>): Promise<void> => {
   return foldPromise(result.result, processTaskData(config)).then(() => {
     if (result.next) {
+      Logger.debug(`Loading more data [${pageSize}]`, result.next)
       delayedQuery(config, 0, { page: result.next, count: pageSize }, 0);
     } else {
+      Logger.info(`No more data to load in this run. Waiting for ${nextQueryTimeout} ms`);
       delayedQuery(config, nextQueryTimeout, mkFirstQuery(config), 0);
     }
   })
@@ -51,6 +55,7 @@ const processResult = (config: Config) => (result: PagingResult<TaskSyncData>): 
   * @param retry - number of retries
   */
 function delayedQuery(config: Config, timeout: number, query: PagedQuery<TaskSyncQuery, string>, retry: number): void {
+  Logger.info("Scheduling query ", { query: query, retry: retry, timeout: timeout });
   setTimeout(doPaging, timeout, config, query, retry);
 }
 
@@ -65,10 +70,10 @@ function doPaging(config: Config, nextQuery: PagedQuery<TaskSyncQuery, string>, 
     processResult(config)
   ).catch((error) => {
     if (retry < retriesBeforeFailure && !error.fatal) {
-      console.error(`Failed to process tasks. Will retry in ${retryTimeout/1000} seconds. Error:`, error);
+      Logger.error(`Failed to process tasks. Will retry in ${retryTimeout / 1000} seconds. Attempt ${retry}. Error:`, error);
       delayedQuery(config, retryTimeout, nextQuery, retry + 1);
     } else {
-      console.error("Failed to process tasks. No more retries. Error:", error);
+      Logger.error("Failed to process tasks. No more retries. Error:", error);
     }
   });
 }
