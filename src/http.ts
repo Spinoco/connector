@@ -147,6 +147,11 @@ function handleJsonResult<O>(requestPath: string, res: http.IncomingMessage, res
   * @returns request options
   */
 function buildOptions(server: HttpServer, method: string, requestPath: string, token: string, postData?: string): http.RequestOptions {
+  // Ensure that the path starts with a '/'
+  if (requestPath[0] !== '/') {
+    requestPath = '/' + requestPath;
+  }
+
   const options: http.RequestOptions = {
     hostname: server.hostname,
     port: server.port,

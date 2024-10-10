@@ -1,9 +1,10 @@
 import { HttpServer } from "./interfaces/http-server";
-import {Config, ApiConfig, TaskSyncConfig, assertEnv} from "./interfaces/config";
-import {buildLocalStorage} from "./interfaces/storage/local-storage";
-import {buildAWSS3Storage} from "./interfaces/storage/aws-s3-storage";
-import {buildGCSStorage} from "./interfaces/storage/gcs-storage";
-import {buildAzureStorage} from "./interfaces/storage/azure-storage";
+import { Config, ApiConfig, TaskSyncConfig } from "./interfaces/config";
+import {buildLocalStorage} from "./storage/local-storage";
+import {buildAWSS3Storage} from "./storage/aws-s3-storage";
+import {buildGCSStorage} from "./storage/gcs-storage";
+import {buildAzureStorage} from "./storage/azure-storage";
+import { Logger } from "./logging";
 
 /**
   * Default API server configuration
@@ -72,7 +73,7 @@ function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
     ({
       tag: syncTag,
       fileNameTemplate: fileNameTemplate,
-      startFrom: process.env.SP_TASK_START_FROM ? new Date(process.env.SP_TASK_START_FROM): undefined,
+      startFrom: process.env.SP_TASK_SYNC_START_FROM ? new Date(process.env.SP_TASK_SYNC_START_FROM): undefined,
       get: process.env.SP_TASK_SYNC_GET_DATA || "",
       delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
     })
@@ -82,6 +83,7 @@ function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
 
 function buildStorage() {
   const providerType = (process.env.SP_TASK_SYNC_STORAGE_PROVIDER || "local").toLowerCase();
+  Logger.info(`Building storage provider: ${providerType}`);
   switch (providerType) {
     case "local": return buildLocalStorage();
     case "s3": return buildAWSS3Storage();
@@ -91,4 +93,9 @@ function buildStorage() {
   }
 }
 
-
+/** fails if environment is not defined or provides value of the environment **/
+export function assertEnv(env: string): Promise<string> {
+  const value = process.env[env]
+  if (value == undefined) return Promise.reject(`Configuration option for ${env} is not defined`);
+  else return Promise.resolve(value);
+}
