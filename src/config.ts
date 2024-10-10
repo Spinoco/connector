@@ -17,17 +17,15 @@ const defaultAPIServer: HttpServer = {
   * Build configuration from environment variables
   */
 export function buildConfig(): Promise<Config> {
-  return buildTaskSyncConfig().then((taskSyncConfig) => {
-    return buildApiConfig().then((apiConfig) => {
-      return buildStorage().then((storage) => {
-        return Promise.resolve({
-          api: apiConfig,
-          taskSync: taskSyncConfig,
-          storage: storage
-        });
-      })
-    });
-  });
+  return buildTaskSyncConfig().then((taskSyncConfig) =>
+  buildApiConfig().then((apiConfig) =>
+  buildStorage().then((storage) =>
+    ({
+      api: apiConfig,
+      taskSync: taskSyncConfig,
+      storage: storage
+    })
+  )))
 }
 
 /**
@@ -69,23 +67,16 @@ function buildApiConfig(): Promise<ApiConfig> {
   * Build task sync configuration from environment variables
   */
 function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
-  return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => {
-    return assertEnv("SP_TASK_SYNC_TAG").then((syncTag) => {
-      let startFrom: Date = undefined;
-      if (process.env.SP_TASK_START_FROM != undefined)  {
-        startFrom = new Date(process.env.SP_TASK_START_FROM)
-      }
-
-      return Promise.resolve({
-        tag: syncTag,
-        fileNameTemplate: fileNameTemplate,
-        startFrom: startFrom,
-        get: process.env.SP_TASK_SYNC_GET_DATA || "",
-        delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
-      });
-    });
-  });
-  
+  return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => 
+  assertEnv("SP_TASK_SYNC_TAG").then((syncTag) =>
+    ({
+      tag: syncTag,
+      fileNameTemplate: fileNameTemplate,
+      startFrom: process.env.SP_TASK_START_FROM ? new Date(process.env.SP_TASK_START_FROM): undefined,
+      get: process.env.SP_TASK_SYNC_GET_DATA || "",
+      delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
+    })
+  ))
 }
 
 

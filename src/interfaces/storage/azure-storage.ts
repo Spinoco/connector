@@ -7,8 +7,8 @@ import {BlobServiceClient} from "@azure/storage-blob";
  * Builds storage client for the Azure blob storage
  */
 export function buildAzureStorage(): Promise<FileStorage> {
-  return assertEnv("SP_TASK_SYNC_AZURE_DSN").then((azureDSN) => {
-    return assertEnv("SP_TASK_SYNC_AZURE_CLIENT_NAME").then((clientName) => {
+  return assertEnv("SP_TASK_SYNC_AZURE_DSN").then((azureDSN) =>
+    assertEnv("SP_TASK_SYNC_AZURE_CLIENT_NAME").then((clientName) => {
       const blobService = BlobServiceClient.fromConnectionString(azureDSN);
       const container = blobService.getContainerClient(clientName);
       const options = {
@@ -16,7 +16,7 @@ export function buildAzureStorage(): Promise<FileStorage> {
       }
       const adapter = new AzureStorageBlobStorageAdapter(container, options);
 
-      return Promise.resolve(new FileStorage(adapter));
-    });
-  });
+      return new FileStorage(adapter);
+    })
+  );
 }

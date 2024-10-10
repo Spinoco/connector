@@ -9,8 +9,8 @@ import {resolve} from "node:url";
  */
 export function buildLocalStorage(): Promise<FileStorage> {
   return assertEnv("SP_TASK_SYNC_SAVE_TO").then((saveTo) => {
-    const rootDirectory = resolve(process.cwd(), saveTo);
+    const rootDirectory = resolve(process.cwd(), saveTo); //todo: correct?
     const adapter = new LocalStorageAdapter(rootDirectory);
-    return Promise.resolve(new FileStorage(adapter));
+    return new FileStorage(adapter);
   })
 }
