@@ -1,9 +1,10 @@
 import { HttpServer } from "./interfaces/http-server";
-import {Config, ApiConfig, TaskSyncConfig, assertEnv} from "./interfaces/config";
-import {buildLocalStorage} from "./interfaces/storage/local-storage";
-import {buildAWSS3Storage} from "./interfaces/storage/aws-s3-storage";
-import {buildGCSStorage} from "./interfaces/storage/gcs-storage";
-import {buildAzureStorage} from "./interfaces/storage/azure-storage";
+import { Config, ApiConfig, TaskSyncConfig } from "./interfaces/config";
+import {buildLocalStorage} from "./storage/local-storage";
+import {buildAWSS3Storage} from "./storage/aws-s3-storage";
+import {buildGCSStorage} from "./storage/gcs-storage";
+import {buildAzureStorage} from "./storage/azure-storage";
+import { Logger } from "./logging";
 
 /**
   * Default API server configuration
@@ -17,17 +18,15 @@ const defaultAPIServer: HttpServer = {
   * Build configuration from environment variables
   */
 export function buildConfig(): Promise<Config> {
-  return buildTaskSyncConfig().then((taskSyncConfig) => {
-    return buildApiConfig().then((apiConfig) => {
-      return buildStorage().then((storage) => {
-        return Promise.resolve({
-          api: apiConfig,
-          taskSync: taskSyncConfig,
-          storage: storage
-        });
-      })
-    });
-  });
+  return buildTaskSyncConfig().then((taskSyncConfig) =>
+  buildApiConfig().then((apiConfig) =>
+  buildStorage().then((storage) =>
+    ({
+      api: apiConfig,
+      taskSync: taskSyncConfig,
+      storage: storage
+    })
+  )))
 }
 
 /**
@@ -69,28 +68,22 @@ function buildApiConfig(): Promise<ApiConfig> {
   * Build task sync configuration from environment variables
   */
 function buildTaskSyncConfig(): Promise<TaskSyncConfig> {
-  return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => {
-    return assertEnv("SP_TASK_SYNC_TAG").then((syncTag) => {
-      let startFrom: Date = undefined;
-      if (process.env.SP_TASK_START_FROM != undefined)  {
-        startFrom = new Date(process.env.SP_TASK_START_FROM)
-      }
-
-      return Promise.resolve({
-        tag: syncTag,
-        fileNameTemplate: fileNameTemplate,
-        startFrom: startFrom,
-        get: process.env.SP_TASK_SYNC_GET_DATA || "",
-        delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
-      });
-    });
-  });
-  
+  return assertEnv("SP_TASK_SYNC_FILE_NAME_TEMPLATE").then((fileNameTemplate) => 
+  assertEnv("SP_TASK_SYNC_TAG").then((syncTag) =>
+    ({
+      tag: syncTag,
+      fileNameTemplate: fileNameTemplate,
+      startFrom: process.env.SP_TASK_SYNC_START_FROM ? new Date(process.env.SP_TASK_SYNC_START_FROM): undefined,
+      get: process.env.SP_TASK_SYNC_GET_DATA || "",
+      delete: process.env.SP_TASK_SYNC_DELETE_DATA || ""
+    })
+  ))
 }
 
 
 function buildStorage() {
   const providerType = (process.env.SP_TASK_SYNC_STORAGE_PROVIDER || "local").toLowerCase();
+  Logger.info(`Building storage provider: ${providerType}`);
   switch (providerType) {
     case "local": return buildLocalStorage();
     case "s3": return buildAWSS3Storage();
@@ -100,4 +93,9 @@ function buildStorage() {
   }
 }
 
-
+/** fails if environment is not defined or provides value of the environment **/
+export function assertEnv(env: string): Promise<string> {
+  const value = process.env[env]
+  if (value == undefined) return Promise.reject(`Configuration option for ${env} is not defined`);
+  else return Promise.resolve(value);
+}

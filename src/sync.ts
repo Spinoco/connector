@@ -18,7 +18,6 @@ const retriesBeforeFailure = 3;
   * @param taskData - data received from the server
   */
 const processTaskData = (config: Config) => (taskData: TaskSyncData): Promise<void> => {
-  Logger.info(`Received page size: ${taskData.get.length}`)
   return foldPromise(taskData.get, (getRequest) => {
     return saveToFile(config.api.server, getRequest.path, config.api.token, getRequest.fileName, config.storage)
   }).then(() => foldPromise(taskData.delete, (deleteRequest) =>
@@ -36,6 +35,7 @@ const processTaskData = (config: Config) => (taskData: TaskSyncData): Promise<vo
   * @param result - result of the paging query
   */
 const processResult = (config: Config) => (result: PagingResult<TaskSyncData>): Promise<void> => {
+  Logger.info(`Received page size: ${result.result.length}`);
   return foldPromise(result.result, processTaskData(config)).then(() => {
     if (result.next) {
       Logger.debug(`Loading more data [${pageSize}]`, result.next)
@@ -89,7 +89,7 @@ function mkFirstQuery(config: Config): PagedQuery<TaskSyncQuery, string> {
       get: config.taskSync.get,
       delete: config.taskSync.delete,
       fileNameTemplate: config.taskSync.fileNameTemplate,
-      startFrom: config.taskSync.startFrom.getTime().toString() // we need to send DT as millis since epoch here encoded as string.
+      startFrom: config.taskSync.startFrom?.getTime().toString() // we need to send DT as millis since epoch here encoded as string.
     },
     count: pageSize
   }
