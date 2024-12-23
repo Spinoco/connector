@@ -89,7 +89,13 @@ function mkFirstQuery(config: Config): PagedQuery<TaskSyncQuery, string> {
       get: config.taskSync.get,
       delete: config.taskSync.delete,
       fileNameTemplate: config.taskSync.fileNameTemplate,
-      startFrom: config.taskSync.startFrom?.getTime().toString() // we need to send DT as millis since epoch here encoded as string.
+      startFrom: config.taskSync.startFrom?.getTime().toString(), // we need to send DT as millis since epoch here encoded as string.
+      skillsShould: config.taskSync.skillsShould,
+      skillsMust: config.taskSync.skillsMust,
+      skillsMustNot: config.taskSync.skillsMustNot,
+      hashTagsShould: config.taskSync.hashTagsShould,
+      hashTagsMust: config.taskSync.hashTagsMust,
+      hashTagsMustNot: config.taskSync.hashTagsMustNot
     },
     count: pageSize
   }

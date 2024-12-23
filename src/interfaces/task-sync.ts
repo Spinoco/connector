@@ -42,6 +42,19 @@ export interface TaskSyncQuery {
   /** template to build the file name **/
   fileNameTemplate: string;
   /** initial time from which to pull data, only when performing first query with tag, otherwise ignored **/
-  startFrom?: string
+  startFrom?: string;
+  /** the supplied tasks must have the following skills assigned to them - empty no requirement**/
+  skillsMust: string[];
+  /** the supplied tasks should have any of the following skills assigned to them - empty no requirement**/
+  skillsShould: string[];
+  /** the supplied tasks must not have the following skills assigned to them - empty no requirement**/
+  skillsMustNot: string[];
+  /** the supplied tasks must have the following hashtags assigned to them - empty no requirement. Hashtags are encoded with their id and eventually value separated by dot **/
+  hashTagsMust: string[];
+  /** the supplied tasks should have any of the following hashtags assigned to them - empty no requirement. Hashtags are encoded with their id and eventually value separated by dot**/
+  hashTagsShould: string[];
+  /** the supplied tasks must not have the following skills hashtags to them - empty no requirement. Hashtags are encoded with their id and eventually value separated by dot**/
+  hashTagsMustNot: string[];
+
 }
 
