@@ -105,33 +105,33 @@ function buildStorage(): Promise<FileStorage> {
  * Array is satisfying the skillId by having 1..4 characters in skill id
  * @param env
  */
-function parseSkills(env: string | null): string[] {
+function parseSkills(env?: string): string[] {
   let splitted = (env || "").split(",")
   let checked = splitted.filter((skill) => {
     let skillId = skill.trim();
     let length = skillId.length;
-    return(length > 0 && length <= 4)
+    return (length > 0 && length <= 4)
   });
 
-  return (checked);
+  return checked;
 }
 
 /**
  * Tests if supplied command line params is valid hashtags specification. hashtags may be specified as uuid or as uuid:value pair, separated by comma.
  * @param env
  */
-function parseHashTags(env: string | null): string[] {
+function parseHashTags(env?: string): string[] {
   let splitted = (env || "").split(",")
-  let mapped = splitted.filter((spec) => {
+  let valid = splitted.filter((spec) => {
     let parts = spec.split(":")
     if (parts.length == 1) {
-      return (isType1UUID(parts[0]) ? parts[0] : null);
+      return isType1UUID(parts[0]) ? parts[0] : null;
     } else if (parts.length == 2) {
-      if (isType1UUID(parts[0])) return(parts[0].trim()+":"+parts[1].trim())
-      else return null;
+      return isType1UUID(parts[0]) ? (parts[0] + ":" + parts[1].trim()) : null;
+    } else {
+      return null;
     }
   })
-  let valid = mapped.filter((spec) => spec != null)
 
   return valid;
 }
@@ -140,7 +140,7 @@ function parseHashTags(env: string | null): string[] {
  * Tests if supplied string is type 1 uuid
  * @param uuid UUid string to test
  */
-function isType1UUID(uuid: string | null) : boolean {
+function isType1UUID(uuid?: string): boolean {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return regex.test((uuid || "").trim());
 }
