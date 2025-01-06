@@ -12,17 +12,23 @@ The tool is configured using environment variables.
 
 ### Common configuration parameters 
 
-| Variable                       | Example value              | Description                                                                                                                                                                                                                                                                                |
-|--------------------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SP_API_TOKEN                   |                            | API token obtained from Spinoco Account. Please see instructions on how to obtain one [here](https://help.spinoco.com/administrators/generate-an-api-token-for-a-user).                                                                                                                    |
-| SP_TASK_SYNC_TAG               | my_sync_tag                | Tag that is used to keep the synchronization state on the Spinoco Platform. Must be unique for a given user, and must be maximum 64 characters (UTF8).                                                                                                                                     |
-| SP_TASK_SYNC_FILE_NAME_TEMPLATE | see below                  | Contains template for the file that is generated from the metadata of the task.                                                                                                                                                                                                            |
-| SP_TASK_SYNC_GET_DATA          | recordings, transcriptions | Which data to get. See below for supported options.                                                                                                                                                                                                                                        |
-| SP_TASK_SYNC_DELETE_DATA       | recordings                 | Which data to remove from the Spinoco Platform after successful synchronization (Recordings only supported now)                                                                                                                                                                            |
-| SP_TASK_SYNC_SAVE_TO           | /data                      | Root of the synchronization                                                                                                                                                                                                                                                                |
-| SP_TASK_START_FROM | 2024-09-09T15:45:47.277Z   | Date from which the synchronization should start. This is useful when you want to synchronize only the data that was created after a certain date. Note that this is only applied on the initial synchornization start. If the synchrionization has been started already, this is ignored. |
-| SP_TASK_SYNC_STORAGE_PROVIDER   | local                      | Storage provider to use. Currently supported are: local, s3, gcs, azure.                                                                                                                                                                                                                   |
-| SP_LOG_LEVEL | info                       | Log level of the tool. Possible values are: error, warn, info, debug, trace.                                                                                                                                                                                                               |
+| Variable                        | Example value                                                             | Description                                                                                                                                                                                                                                                                                |
+|---------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SP_API_TOKEN                    |                                                                           | API token obtained from Spinoco Account. Please see instructions on how to obtain one [here](https://help.spinoco.com/administrators/generate-an-api-token-for-a-user).                                                                                                                    |
+| SP_TASK_SYNC_TAG                | my_sync_tag                                                               | Tag that is used to keep the synchronization state on the Spinoco Platform. Must be unique for a given user, and must be maximum 64 characters (UTF8).                                                                                                                                     |
+| SP_TASK_SYNC_FILE_NAME_TEMPLATE | see below                                                                 | Contains template for the file that is generated from the metadata of the task.                                                                                                                                                                                                            |
+| SP_TASK_SYNC_GET_DATA           | recordings, transcriptions                                                | Which data to get. See below for supported options.                                                                                                                                                                                                                                        |
+| SP_TASK_SYNC_DELETE_DATA        | recordings                                                                | Which data to remove from the Spinoco Platform after successful synchronization (Recordings only supported now)                                                                                                                                                                            |
+| SP_TASK_SYNC_SAVE_TO            | /data                                                                     | Root of the synchronization                                                                                                                                                                                                                                                                |
+| SP_TASK_START_FROM              | 2024-09-09T15:45:47.277Z                                                  | Date from which the synchronization should start. This is useful when you want to synchronize only the data that was created after a certain date. Note that this is only applied on the initial synchornization start. If the synchrionization has been started already, this is ignored. |
+| SP_TASK_SYNC_STORAGE_PROVIDER   | local                                                                     | Storage provider to use. Currently supported are: local, s3, gcs, azure.                                                                                                                                                                                                                   |
+| SP_TASK_SYNC_SKILLS_MUST        | SK1,SK2                                                                   | Skills that tasks must have (all from the list) in order to be included in the synchronization                                                                                                                                                                                             |
+| SP_TASK_SYNC_SKILLS_MUSTNOT     | SK1,SK2                                                                   | Skills that tasks must not have (none from the list) in order to be included in the synchronization                                                                                                                                                                                        |
+| SP_TASK_SYNC_SKILLS_SHOULD      | SK1,SK2                                                                   | Skills that tasks should have (any of the list) in order to be included in the synchronization                                                                                                                                                                                             |
+| SP_TASK_SYNC_HASHTAGS_MUST      | 1d4de98c-c130-11ef-9cd2-0242ac120002,1d4de98c-c130-11ef-9cd2-0242ac120002 | HashTags that tasks must have (all from the list) in order to be included in the synchronization                                                                                                                                                                                           |
+| SP_TASK_SYNC_HASHTAGS_MUSTNOT   | 1d4de98c-c130-11ef-9cd2-0242ac120002                                      | HashTags that tasks must have (none from the list) in order to be included in the synchronization                                                                                                                                                                                          |
+| SP_TASK_SYNC_HASHTAGS_SHOULD    | 1d4de98c-c130-11ef-9cd2-0242ac120002:value2                               | HashTags that tasks must have (any of the list) in order to be included in the synchronization                                                                                                                                                                                             |
+| SP_LOG_LEVEL                    | info                                                                      | Log level of the tool. Possible values are: error, warn, info, debug, trace.                                                                                                                                                                                                               |
 
 
 ### File Storage Configuration
@@ -143,6 +149,24 @@ If, for example, the template results in the file name above and both the record
 `2004/12/01/20041201120000-b808d74e-84b2-11ef-b864-0242ac120002.ogg`
 `2004/12/01/20041201120000-b808d74e-84b2-11ef-b864-0242ac120002.trans.json`
 
+### Filtering only specific tasks to be included with synchronization
+
+In certain situations you want to download only certain data to your storage. This can be achieved by specific whihc skills or hashtags task should, must or must not have.
+
+For example if you want to download only tasks that have skill SK1 and SK2, you can set the following environment variable:
+
+``` 
+SP_TASK_SYNC_SKILLS_MUST=SK1,SK2
+```
+
+For HashTags, HashTag must be specified in the format `hash_tag_id:value`. 
+For example if you want to download only tasks that have hashtag 1d4de98c-c130-11ef-9cd2-0242ac120002 with value `value2`, you can set the following environment variable:
+
+```
+SP_TASK_SYNC_HASHTAGS_MUST=1d4de98c-c130-11ef-9cd2-0242ac120002:value2
+```
+
+Note that for both skills and hashtags filter multiple values are supported and may be separated by comma.
 
 ## Usage
 
